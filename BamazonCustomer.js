@@ -67,30 +67,33 @@ function purchaseSelection() {
     ])
     .then(function(response) {
       confirmStock(response);
-      // if id's stock quantity is greater than the purchased quantity,
-      // respond with insufficient quantity
-      // else updateValues(response) (callback function should work)
     });
 }
 
 function confirmStock(response) {
-    connection.query(
-      "SELECT stock_quantity, price FROM products WHERE ?",
-      {
-        item_id: response.purchaseSelection
-      },
-      function(err, res) {
-        if (err) throw err;
-        if (res[0].stock_quantity > response.quantity) {
-            console.log("That total comes to $" + (res[0].price * response.quantity)+".");
-            updateValues(response);
-        } else {
-          console.log("I'm sorry, we only have "+ res[0].stock_quantity + " of that item right now and cannot fulfil this purchase. Please come again!");
-            
-          connection.end();
-        }
+  connection.query(
+    "SELECT stock_quantity, price FROM products WHERE ?",
+    {
+      item_id: response.purchaseSelection
+    },
+    function(err, res) {
+      if (err) throw err;
+      if (res[0].stock_quantity > response.quantity) {
+        console.log(
+          "That total comes to $" + res[0].price * response.quantity + "."
+        );
+        updateValues(response);
+      } else {
+        console.log(
+          "I'm sorry, we only have " +
+            res[0].stock_quantity +
+            " of that item right now and cannot fulfil this purchase. Please come again!"
+        );
+
+        connection.end();
       }
-    );
+    }
+  );
 }
 
 // // // Function to update values when purchased
@@ -115,6 +118,3 @@ function updateValues(response) {
 
 // // // Function to kick off program
 whatWeHave();
-
-// check to see if we have the quantity
-// that will be x Price
