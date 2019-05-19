@@ -1,6 +1,9 @@
+// // // Require statements
 var mysql = require("mysql");
 var inquirer = require("inquirer");
+// var table = require("cli-table");
 
+// // // Connecting the database
 var connection = mysql.createConnection({
   host: "localhost",
 
@@ -11,99 +14,107 @@ var connection = mysql.createConnection({
   user: "root",
 
   // Your password
-  password: "",
+  password: "$Wordf1sh211986",
   database: "bamazon"
 });
 
-
-// id's, names, and prices
-
-function readValues() {
-  connection.query(
-    // "SELECT DISTINCT item_name FROM products WHERE ?",
-    "SELECT * FROM products",
+// // // Function to show user what is in stock
+function whatWeHave() {
+  inquirer
+    .prompt([
       {
-        genre: 'Electric'
-      },
+        type: "list",
+        name: "genre",
+        message: "Welcome to my music store! What genre do you like?",
+        choices: ["Classic Rock", "Country", "Electric", "Pop"]
+      }
+    ])
+    .then(function(response) {
+      console.log("This is what we have:");
+      readValues(response);
+      purchaseSelection();
+    });
+}
+
+// // // Function to read values
+function readValues(response) {
+  connection.query(
+    "SELECT item_id, item_name, price FROM products WHERE ?",
+    {
+      genre: response.genre
+    },
     function(err, res) {
       if (err) throw err;
-      // Log all results of the SELECT statement
-      
-      
       console.log(res);
+    }
+  );
+}
 
+// // // Function to purchase selected item
+function purchaseSelection() {
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "purchaseSelection",
+        message: "Which product would you like to buy?"
+      },
+      {
+        type: "input",
+        name: "quantity",
+        message: "How many would you like?"
+      }
+    ])
+    .then(function(response) {
+      confirmStock(response);
+      // if id's stock quantity is greater than the purchased quantity,
+      // respond with insufficient quantity
+      // else updateValues(response) (callback function should work)
+    });
+}
 
+function confirmStock(response) {
+    connection.query(
+      "SELECT stock_quantity, price FROM products WHERE ?",
+      {
+        item_id: response.purchaseSelection
+      },
+      function(err, res) {
+        if (err) throw err;
+        if (res[0].stock_quantity > response.quantity) {
+            console.log("That total comes to $" + (res[0].price * response.quantity)+".");
+            updateValues(response);
+        } else {
+          console.log("I'm sorry, we only have "+ res[0].stock_quantity + " of that item right now and cannot fulfil this purchase. Please come again!");
+            
+          connection.end();
+        }
+      }
+    );
+}
 
-
+// // // Function to update values when purchased
+function updateValues(response) {
+  connection.query(
+    `
+        UPDATE products
+        SET stock_quantity = (stock_quantity - "${response.quantity}")
+        WHERE ?;
+    `,
+    [
+      {
+        item_id: response.purchaseSelection
+      }
+    ],
+    function(err, res) {
+      console.log("Thank you for your purchase!");
       connection.end();
     }
   );
 }
 
-readValues();
+// // // Function to kick off program
+whatWeHave();
 
-// function updateValues(response) {
-//   var query = connection.query(
-//     "UPDATE products SET ? WHERE ?",
-//     [
-//       {
-//         price: priceInput
-//       },
-//       {
-//         product_name: productInput
-//       }
-//     ],
-//     function(err, res) {
-//       readValues();
-//     }
-//   );
-// }
-
-// inquirer
-//   .prompt([
-//     {
-//       type: "list",
-//       name: "doWhat",
-//       message: "What would you like to do?",
-//       choices: ["Add", "Bid", "Exit"]
-//     }
-//   ])
-//   .then(function(response) {
-//     if (response.doWhat === "Add") {
-//       inquirer
-//         .prompt([
-//           {
-//             type: "input",
-//             name: "productInput",
-//             message: "What would you like to add?"
-//           },
-//           {
-//             type: "input",
-//             name: "departmentInput",
-//             message: "Which department?"
-//           },
-//           {
-//             type: "input",
-//             name: "priceInput",
-//             message: "Price?"
-//           }
-//         ])
-//         .then(function createValues(response2) {
-//           var query = connection.query(
-//             "INSERT INTO products SET ?",
-//             {
-//               product_name: response2.productInput,
-//               department_name: response2.departmentInput,
-//               price: response2.priceInput
-//             },
-//             function(err, res) {
-//               readValues();
-//             }
-//           );
-//         });
-//     } else if (response.doWhat === "Bid") {
-//         console.log("Bid");
-//     } else {
-//         console.log("Come again!");
-//     }
-//   });
+// check to see if we have the quantity
+// that will be x Price
