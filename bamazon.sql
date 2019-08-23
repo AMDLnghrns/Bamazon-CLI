@@ -9,7 +9,7 @@ USE bamazon
 
 -- UPDATE products 
 -- SET stock_quantity = 100
--- -- WHERE item_id = 11
+-- WHERE item_id = 11
 -- ;
 
 -- DELETE from products where item_id in ('1','2','5','6','7','12','17','9','19'); 
